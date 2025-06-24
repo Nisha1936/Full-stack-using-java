@@ -1,0 +1,199 @@
+Here’s a simple **full stack project example** with:
+
+- **Frontend:** HTML (a basic form)
+- **Backend:** Java (using Spring Boot)
+- **Database:** MySQL
+
+I’ll show you the core files with code snippets and headings for clarity. This will let you create a form that sends data to a Java backend, which stores it in MySQL.
+
+---
+
+## 1. Database Table Setup
+
+Create a database and a table in MySQL:
+
+```sql
+CREATE DATABASE demo;
+USE demo;
+
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL
+);
+```
+
+---
+
+## 2. Java Spring Boot Backend
+
+### 2.1. Maven Dependencies (`pom.xml`)
+
+```xml name=pom.xml
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>demo</artifactId>
+  <version>1.0</version>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+  </dependencies>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.2.0</version>
+  </parent>
+</project>
+```
+
+---
+
+### 2.2. Application Properties (`src/main/resources/application.properties`)
+
+```properties name=src/main/resources/application.properties
+spring.datasource.url=jdbc:mysql://localhost:3306/demo
+spring.datasource.username=root
+spring.datasource.password=your_mysql_password
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+```
+
+---
+
+### 2.3. User Entity (`src/main/java/com/example/demo/User.java`)
+
+```java name=src/main/java/com/example/demo/User.java
+package com.example.demo;
+
+import jakarta.persistence.*;
+
+@Entity
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    // Getters and setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+```
+
+---
+
+### 2.4. User Repository (`src/main/java/com/example/demo/UserRepository.java`)
+
+```java name=src/main/java/com/example/demo/UserRepository.java
+package com.example.demo;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+}
+```
+
+---
+
+### 2.5. User Controller (`src/main/java/com/example/demo/UserController.java`)
+
+```java name=src/main/java/com/example/demo/UserController.java
+package com.example.demo;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@CrossOrigin(origins = "*") // Allow frontend access
+public class UserController {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @PostMapping("/users")
+    public String addUser(@RequestBody User user) {
+        userRepository.save(user);
+        return "User added";
+    }
+}
+```
+
+---
+
+### 2.6. Main Application (`src/main/java/com/example/demo/DemoApplication.java`)
+
+```java name=src/main/java/com/example/demo/DemoApplication.java
+package com.example.demo;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class DemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
+}
+```
+
+---
+
+## 3. Frontend HTML
+
+### 3.1. Simple HTML Form (`index.html`)
+
+```html name=index.html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Form</title>
+</head>
+<body>
+    <h1>Add User</h1>
+    <form id="userForm">
+        <input type="text" id="name" placeholder="Enter name" required />
+        <button type="submit">Submit</button>
+    </form>
+    <div id="result"></div>
+    <script>
+        document.getElementById('userForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const response = await fetch('http://localhost:8080/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            });
+            const text = await response.text();
+            document.getElementById('result').innerText = text;
+        };
+    </script>
+</body>
+</html>
+```
+
+---
+
+## 4. How It Works
+
+1. **Frontend:** User enters a name and submits the form.
+2. **Backend:** Java Spring Boot receives the POST request and saves the name in MySQL.
+3. **Database:** The `users` table stores the name.
+
+---
+
+Let me know if you want advanced features like login, registration, displaying all users, or deployment instructions!
